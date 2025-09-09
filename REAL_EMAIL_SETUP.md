@@ -52,12 +52,12 @@ If Gmail doesn't work, use SendGrid (free for 100 emails/day):
 
 ### Test 1: Check Email Status
 ```
-https://ayodhya-court-br1u.vercel.app/email-status
+https://ayodhya-court-case.vercel.app/email-status
 ```
 
 ### Test 2: Test Email Endpoint
 ```
-https://ayodhya-court-br1u.vercel.app/send-email-working
+https://ayodhya-court-case.vercel.app/send-email-working
 ```
 
 ### Test 3: Frontend Test
@@ -111,7 +111,7 @@ git add .
 git commit -m "Enable real email sending"
 git push origin main
 
-# Test after https://ayodhya-court-br1u.vercel.app/send-email-working \
+# Test after https://ayodhya-court-case.vercel.app/send-email-working \
   -H "Content-Type: application/json" \
   -d '{"to":"test@example.com","subject":"Test","html":"<h1>Test</h1>"}'
 ```
