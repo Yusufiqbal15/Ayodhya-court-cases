@@ -103,15 +103,27 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     error,
   } = useQuery({
     queryKey: ["cases"],
-    queryFn: fetchCases,
+    queryFn: () => fetchCases(),
     staleTime: 5 * 60 * 1000, // Data is considered "fresh" for 5 minutes
   })
 
   // Print function for department cases
   const handlePrintDepartmentCases = async (departmentId: number) => {
     try {
-      const data = await fetchCases({ department: departmentId })
-      const departmentCases = data.cases || []
+      // Fetch cases with all required data
+      // Fetch all cases for the department with complete data
+      const data = await fetchCases({
+        department: departmentId,
+        limit: 1000, // Large limit to get all cases
+      })
+      const departmentCases = (data.cases || []).map(c => ({
+        ...c,
+        hearingDate: c.hearingDate || null,
+        petitionerName: c.petitionerName || c.petitionername || '-',
+        respondentName: c.respondentName || c.respondentname || '-',
+        writType: c.writType || '-',
+        caseType: c.caseType || '-'
+      }))
       const department = departments.find((d) => d.id === departmentId)
 
       if (departmentCases.length === 0) {
@@ -212,19 +224,18 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
             <div class="summary-item">${currentLang === "hi" ? "अवमानना" : "Contempt"}: ${departmentCases.filter((c) => c.writType === "Contempt").length}</div>
           </div>
 
-          <table>
+          <table class="w-full border-collapse border">
             <thead>
               <tr>
-                <th>${currentLang === "hi" ? "क्र.सं." : "S.No."}</th>
-                <th>${currentLang === "hi" ? "मामला आईडी" : "Case ID"}</th>
-                <th>${currentLang === "hi" ? "स्थिति" : "Status"}</th>
-                <th>${currentLang === "hi" ? "रिट प्रकार" : "Writ Type"}</th>
-                <th>${currentLang === "hi" ? "विभाग" : "Department"}</th>
-                <th>${currentLang === "hi" ? "सुनवाई तिथि" : "Hearing Date"}</th>
-                // <th>${currentLang === "hi" ? "उप-विभाग" : "Sub-Department"}</th>
-                <th>${currentLang === "hi" ? "याचिकाकर्ता का नाम" : "Petitioner Name"}</th>
-                <th>${currentLang === "hi" ? "प्रतिवादी का नाम" : "Respondent Name"} </th>
-                // <th>${currentLang === "hi" ? "मामले का प्रकार" : "Case Type"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "क्र.सं." : "S.No."}</th>
+                <th class="border p-2">${currentLang === "hi" ? "मामला आईडी" : "Case ID"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "स्थिति" : "Status"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "सुनवाई तिथि" : "Hearing Date"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "उप-विभाग" : "Sub-Department"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "याचिकाकर्ता का नाम" : "Petitioner Name"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "प्रतिवादी का नाम" : "Respondent Name"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "मामले का प्रकार" : "Case Type"}</th>
+                <th class="border p-2">${currentLang === "hi" ? "विभाग" : "Department"}</th>
               </tr>
             </thead>
             <tbody>
@@ -232,16 +243,15 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
           .map(
             (c, index) => `
               <tr>
-                <td>${index + 1}</td>
-                <td>${c.caseNumber || c.id}</td>
-                <td>${currentLang === "hi" ? (c.status === "Pending" ? "लंबित" : "निराकृत") : c.status}</td>
-                <td>${c.writType || "-"}</td>
-                <td>${departmentName}</td>
-                <td>${c.hearingDate ? new Date(c.hearingDate).toLocaleDateString() : "-"}</td>
-                // <td>${c.description || "-"}</td>
-                <td>${c.petitionerName || "-"}</td>
-                <td>${c.respondentName || "-"}</td>
-                // <td>${c.caseType || "-"}</td>
+                <td class="border p-2 text-center">${index + 1}</td>
+                <td class="border p-2">${c.caseNumber || c.id}</td>
+                <td class="border p-2 text-center">${currentLang === "hi" ? (c.status === "Pending" ? "लंबित" : "निराकृत") : c.status}</td>
+                <td class="border p-2">${c.hearingDate ? new Date(c.hearingDate).toLocaleDateString('hi-IN') : "-"}</td>
+                <td class="border p-2">${c.subDepartment?.name_hi || "-"}</td>
+                <td class="border p-2 font-medium">${c.petitionerName || c.petitionername || "-"}</td>
+                <td class="border p-2 font-medium">${c.respondentName || c.respondentname || "-"}</td>
+                <td class="border p-2">${c.writType || "-"}</td>
+                <td class="border p-2">${departmentName}</td>
               </tr>
             `,
           )
@@ -272,12 +282,12 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
       navigate(`/department-dashboard/${departmentId}`)
       return
     }
-
+    
+    setSelectedDeptId(departmentId)
     setModalOpen(true)
     setModalCases([])
     setModalLoading(true)
     setModalError(null)
-    setSelectedDeptId(departmentId)
     setModalType(status)
     let title = ""
     if (status === "pending") title = currentLang === "hi" ? "लंबित मामले" : "Pending Cases"
@@ -386,21 +396,29 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                   </thead>
                   <tbody>
                     {allCases.map((c) => {
-                      let statusLabel = c.status
-                      if (currentLang === "hi") {
-                        statusLabel = c.status === "Pending" ? "लंबित" : "निराकृत"
-                      }
+                      const displayStatus = currentLang === "hi" 
+                        ? (c.status === "Pending" ? "लंबित" : "निराकृत")
+                        : c.status
                       return (
                         <tr key={c.id}>
                           <td className="p-2 border-b font-medium">{c.caseNumber || c.id}</td>
                           <td className="p-2 border-b">
-                            {statusLabel}
+                            {displayStatus}
                           </td>
                           <td className="p-2 border-b">{c.writType}</td>
                           <td className="p-2 border-b">
                             {currentLang === "hi"
                               ? departments.find((d) => d.id === c.department)?.name_hi || "-"
                               : departments.find((d) => d.id === c.department)?.name_en || "-"}
+                          </td>
+                          <td className="p-2 border-b">
+                            {c.petitionerName || "-"}
+                          </td>
+                          <td className="p-2 border-b">
+                            {c.respondentName || "-"}
+                          </td>
+                          <td className="p-2 border-b">
+                            {c.department ? (currentLang === "hi" ? departments.find(d => d.id === c.department)?.name_hi : departments.find(d => d.id === c.department)?.name_en) : "-"}
                           </td>
                           <td className="p-2 border-b">
                             {c.hearingDate ? new Date(c.hearingDate).toLocaleDateString() : "-"}

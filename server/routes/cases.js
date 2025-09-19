@@ -4,14 +4,14 @@ const CaseModel = require('../models/CaseModel');
 const sendMail = require('../utils/sendMail');
 
 router.post('/add', async (req, res) => {
-    const { subDepartments, subdepartmentEmails, petitionerName, respondentName, ...otherFields } = req.body;
+    const { subDepartments, subdepartmentEmails, petitionerName, respondentName, hearingDate, caseType, ...otherFields } = req.body;
 
     try {
         // Validate required fields
-        if (!petitionerName || !respondentName || !otherFields.caseNumber || !otherFields.filingDate) {
+        if (!petitionerName || !respondentName || !otherFields.caseNumber || !otherFields.filingDate || !hearingDate || !caseType) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields'
+                error: 'Missing required fields (Hearing Date, Petitioner Name, Respondent Name, Case Type)'
             });
         }
 
@@ -19,6 +19,8 @@ router.post('/add', async (req, res) => {
             ...otherFields,
             petitionerName: petitionerName.trim(),
             respondentName: respondentName.trim(),
+            hearingDate: hearingDate,
+            caseType: caseType,
             subDepartments: subDepartments || [],
             subdepartmentEmails: subdepartmentEmails || []
         });

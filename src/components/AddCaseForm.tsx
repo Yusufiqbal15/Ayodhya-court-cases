@@ -11,6 +11,8 @@ const AddCaseForm: React.FC<Props> = ({ onSubmit, departments = [] }) => {
     const [formData, setFormData] = useState<Partial<CaseData>>({
         petitionerName: '',
         respondentName: '',
+        hearingDate: '',
+        caseType: '',
         filingDate: new Date(),
         petitionNumber: '',
         noticeNumber: '',
@@ -42,6 +44,11 @@ const AddCaseForm: React.FC<Props> = ({ onSubmit, departments = [] }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        if (!formData.hearingDate || !formData.petitionerName || !formData.respondentName || !formData.caseType) {
+            setError('Hearing Date, Petitioner Name, Respondent Name, and Case Type are required');
+            return;
+        }
 
         if (!formData.subdepartmentEmails?.length) {
             setError('At least one department email is required');
@@ -77,6 +84,28 @@ const AddCaseForm: React.FC<Props> = ({ onSubmit, departments = [] }) => {
                     value={formData.respondentName || ''}
                     onChange={handleChange}
                     placeholder="Respondent Name (Person against whom the case is filed)"
+                    required
+                    className="form-control"
+                />
+            </div>
+            <div className="form-group mb-4">
+                <input
+                    type="date"
+                    name="hearingDate"
+                    value={formData.hearingDate || ''}
+                    onChange={handleChange}
+                    placeholder="Hearing Date"
+                    required
+                    className="form-control"
+                />
+            </div>
+            <div className="form-group mb-4">
+                <input
+                    type="text"
+                    name="caseType"
+                    value={formData.caseType || ''}
+                    onChange={handleChange}
+                    placeholder="Case Type"
                     required
                     className="form-control"
                 />

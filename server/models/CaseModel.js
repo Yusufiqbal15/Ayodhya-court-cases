@@ -4,6 +4,8 @@ const CaseSchema = new mongoose.Schema({
     caseNumber: { type: String, required: true },
     petitionerName: { type: String, required: true },
     respondentName: { type: String, required: true },
+    hearingDate: { type: String, required: true },
+    caseType: { type: String, required: true },
     filingDate: { type: Date, required: true },
     petitionNumber: { type: String },
     noticeNumber: { type: String },
@@ -16,17 +18,6 @@ const CaseSchema = new mongoose.Schema({
         departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'SubDepartment' },
         email: String
     }],
-    petitionerName: {
-        type: String,
-        trim: true
-    },
-    respondentName: {
-        type: String,
-        trim: true
-    },
-    // Remove old fields if they exist
-    petitionername: undefined,
-    respondentname: undefined,
     // ...existing fields...
 });
 

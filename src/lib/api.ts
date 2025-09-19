@@ -4,6 +4,8 @@ export interface Case {
   caseNumber: string;
   petitionerName: string; // Person who filed the case
   respondentName: string; // Person against whom the case is filed
+  hearingDate: string;
+  caseType: string;
   filingDate: Date;
   petitionNumber: string;
   noticeNumber: string;
@@ -11,7 +13,6 @@ export interface Case {
   department: number; // Department ID
   subDepartments?: number[]; // Sub-department IDs
   status: 'Pending' | 'Resolved'; // Status
-  hearingDate: Date | null;
   reminderSent: boolean;
   affidavitDueDate: Date | null;
   affidavitSubmissionDate: Date | null;
@@ -72,6 +73,7 @@ export const fetchCases = async (filters?: {
   search?: string;
   page?: number;
   limit?: number;
+  includeAll?: boolean;
 }) => {
   try {
     const params = new URLSearchParams();
@@ -84,6 +86,7 @@ export const fetchCases = async (filters?: {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.includeAll) params.append('includeAll', 'true');
 
     const url = `${API_BASE}/cases${params.toString() ? `?${params.toString()}` : ''}`;
     console.log('Fetching cases from URL:', url);
@@ -138,8 +141,8 @@ export const createCase = async (caseData: Omit<Case, 'id' | 'hearingDate' | 're
 
     const payload: any = {
       caseNumber: (caseData as any).caseNumber || fallbackCaseNumber(),
-      petitionername: (caseData as any).petitionerName,
-      respondentname: (caseData as any).respondentName,
+      petitionerName: (caseData as any).petitionerName,
+      respondentName: (caseData as any).respondentName,
       filingDate: toIso((caseData as any).filingDate),
       petitionNumber: (caseData as any).petitionNumber,
       noticeNumber: (caseData as any).noticeNumber,

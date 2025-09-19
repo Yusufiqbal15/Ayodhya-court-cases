@@ -4,6 +4,8 @@ import axios from 'axios';
 export interface CaseData {
     petitionerName: string;
     respondentName: string;
+    hearingDate: string;
+    caseType: string;
     filingDate: Date;
     petitionNumber: string;
     noticeNumber: string;
