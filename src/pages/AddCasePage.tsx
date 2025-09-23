@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import type { Department, SubDepartment, Case } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -251,14 +252,16 @@ const AddCasePage: React.FC = () => {
       const finalWritType = formData.writType === 'Custom' ? formData.customWritType : formData.writType;
 
       const caseData = {
+        caseNumber: `CN-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
         petitionerName: formData.petitionerName,
         respondentName: formData.respondentName,
         filingDate: formData.filingDate,
         petitionNumber: formData.petitionNumber,
         noticeNumber: formData.noticeNumber,
         writType: finalWritType,
+        caseType: finalWritType, // Using writType as caseType
         department: parseInt(formData.department),
-        subDepartments: formData.subDepartments.filter(id => id),
+        subDepartments: formData.subDepartments.filter(id => id).map(id => parseInt(id)),
         affidavitDueDate: formData.affidavitDueDate,
         affidavitSubmissionDate: formData.affidavitSubmissionDate,
         counterAffidavitRequired: formData.counterAffidavitRequired,
@@ -272,8 +275,25 @@ const AddCasePage: React.FC = () => {
 
       toast.success(t.saved);
 
-      // Navigate to dashboard after successful submission
-      navigate('/dashboard');
+      // Reset form after successful submission
+      setFormData({
+        petitionerName: '',
+        respondentName: '',
+        filingDate: null,
+        petitionNumber: '',
+        noticeNumber: '',
+        writType: '',
+        customWritType: '',
+        department: '',
+        subDepartments: [''],
+        affidavitDueDate: null,
+        affidavitSubmissionDate: null,
+        counterAffidavitRequired: false,
+        emailid: ''
+      });
+
+      // Stay on same page
+      queryClient.invalidateQueries({ queryKey: ['cases'] }); // Refresh cases data in background
 
     } catch (error) {
       console.error('Error creating case:', error);

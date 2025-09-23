@@ -37,10 +37,10 @@ interface NoticeData {
   subDepartment?: SubDepartment
   caseData?: Case
   customContent?: string
-  date: string
-  letterNumber: string
-  subject: string
-  content: string
+  date: string  // Keeping but not shown in form
+  letterNumber: string  // Keeping but not shown in form
+  subject: string  // Keeping but not shown in form
+  content: string  // Keeping but not shown in form
   signatory: string
   designation: string
 }
@@ -92,7 +92,7 @@ export default function CourtNoticeWriter({ caseId }: NoticeWriterProps) {
   const [noticeData, setNoticeData] = useState<NoticeData>({
     noticeType: "regular",
     language: "hi",
-    date: new Date().toLocaleDateString("en-GB"),
+    date: "",
     letterNumber: "",
     subject: "",
     content: "",
@@ -1421,133 +1421,7 @@ If any uncertain situation arises, you will be responsible yourself, and please 
               {language === "hi" ? "कस्टम नोटिस बनाएं" : "Create Custom Notice"}
             </h2>
             <div style={{ display: "grid", gap: "20px", marginTop: "20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "8px",
-                      fontWeight: "600",
-                      color: "black",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    {language === "hi" ? "पत्र संख्या:" : "Letter Number:"}
-                  </label>
-                  <input
-                    type="text"
-                    value={noticeData.letterNumber}
-                    onChange={(e) => setNoticeData((prev) => ({ ...prev, letterNumber: e.target.value }))}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      border: "2px solid #e5e7eb",
-                      borderRadius: "8px",
-                      fontSize: "1rem",
-                      transition: "border-color 0.2s ease",
-                      outline: "none",
-                      color: "black",
-                    }}
-                    placeholder={language === "hi" ? "पत्र संख्या दर्ज करें" : "Enter letter number"}
-                    onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "8px",
-                      fontWeight: "600",
-                      color: "black",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    {language === "hi" ? "दिनांक:" : "Date:"}
-                  </label>
-                  <input
-                    type="text"
-                    value={noticeData.date}
-                    onChange={(e) => setNoticeData((prev) => ({ ...prev, date: e.target.value }))}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      border: "2px solid #e5e7eb",
-                      borderRadius: "8px",
-                      fontSize: "1rem",
-                      transition: "border-color 0.2s ease",
-                      outline: "none",
-                      color: "black",
-                    }}
-                    onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: "600",
-                    color: "black",
-                    fontSize: "1rem",
-                  }}
-                >
-                  {language === "hi" ? "विषय:" : "Subject:"}
-                </label>
-                <input
-                  type="text"
-                  value={noticeData.subject}
-                  onChange={(e) => setNoticeData((prev) => ({ ...prev, subject: e.target.value }))}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "2px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    transition: "border-color 0.2s ease",
-                    outline: "none",
-                    color: "black",
-                  }}
-                  placeholder={language === "hi" ? "विषय दर्ज करें" : "Enter subject"}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-                />
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: "600",
-                    color: "black",
-                    fontSize: "1rem",
-                  }}
-                >
-                  {language === "hi" ? "नोटिस की सामग्री:" : "Notice Content:"}
-                </label>
-                <textarea
-                  value={noticeData.content}
-                  onChange={(e) => setNoticeData((prev) => ({ ...prev, content: e.target.value }))}
-                  rows={15}
-                  style={{
-                    width: "100%",
-                    padding: "16px",
-                    border: "2px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    fontFamily: "inherit",
-                    resize: "vertical",
-                    transition: "border-color 0.2s ease",
-                    outline: "none",
-                    color: "black",
-                  }}
-                  placeholder={language === "hi" ? "अपना नोटिस यहाँ लिखें..." : "Write your notice here..."}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-                />
-              </div>
+              
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
                 <div>
                   <label

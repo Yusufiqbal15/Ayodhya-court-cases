@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "remove-subdepts": "node scripts/removeSubdepartments.js"
   },
   "keywords": [],
   "author": "",

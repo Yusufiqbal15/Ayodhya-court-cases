@@ -405,20 +405,21 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                           <td className="p-2 border-b">
                             {displayStatus}
                           </td>
-                          <td className="p-2 border-b">{c.writType}</td>
+                          <td className="p-2 border-b">{c.writType || "-"}</td>
                           <td className="p-2 border-b">
                             {currentLang === "hi"
                               ? departments.find((d) => d.id === c.department)?.name_hi || "-"
                               : departments.find((d) => d.id === c.department)?.name_en || "-"}
                           </td>
-                          <td className="p-2 border-b">
+                          <td className="p-2 border-b font-medium">
                             {c.petitionerName || "-"}
                           </td>
-                          <td className="p-2 border-b">
+                          <td className="p-2 border-b font-medium">
                             {c.respondentName || "-"}
                           </td>
                           <td className="p-2 border-b">
-                            {c.department ? (currentLang === "hi" ? departments.find(d => d.id === c.department)?.name_hi : departments.find(d => d.id === c.department)?.name_en) : "-"}
+                            {c.subDepartments && c.subDepartments.length > 0 ? 
+                              (currentLang === "hi" ? "उप-विभाग मौजूद" : "Has Sub-departments") : "-"}
                           </td>
                           <td className="p-2 border-b">
                             {c.hearingDate ? new Date(c.hearingDate).toLocaleDateString() : "-"}
