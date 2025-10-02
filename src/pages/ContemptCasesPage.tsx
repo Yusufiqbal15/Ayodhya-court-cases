@@ -24,9 +24,15 @@ const ContemptCasesPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetchCases();
-      // Filter only contempt cases
-      const contemptCases = response.cases.filter((caseItem: any) => caseItem.writType === 'Contempt');
+      const response = await fetchCases({ includeAll: true });
+      // Filter only contempt cases and process names
+      const contemptCases = response.cases
+        .filter((caseItem: any) => caseItem.writType === 'Contempt')
+        .map((caseItem: any) => ({
+          ...caseItem,
+          petitionerName: caseItem.petitionerName || caseItem.petitionername || '-',
+          respondentName: caseItem.respondentName || caseItem.respondentname || '-'
+        }));
       setCases(contemptCases);
     } catch (error) {
       console.error('Error fetching contempt cases:', error);
@@ -44,18 +50,15 @@ const ContemptCasesPage: React.FC = () => {
   };
 
   // Filter cases based on search and status
-  const filteredCases = cases.filter(caseItem => {
+    const filteredCases = cases.filter(caseItem => {
     const matchesSearch = searchQuery === '' || 
       caseItem.caseNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      caseItem.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       caseItem.petitionNumber?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === '' || caseItem.status === statusFilter;
     
     return matchesSearch && matchesStatus;
-  });
-
-  const translations = {
+  });  const translations = {
     en: {
       title: "Contempt Cases",
       subtitle: "All contempt cases across departments",
@@ -270,7 +273,10 @@ const ContemptCasesPage: React.FC = () => {
                       <div className="text-sm font-medium text-gray-900">{caseItem.caseNumber}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{caseItem.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || '-'}</div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm text-gray-500">

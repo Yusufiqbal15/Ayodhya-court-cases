@@ -276,7 +276,7 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     }
   }
 
-  const handleModalOpen = async (departmentId: number, status: "total" | "pending" | "resolved" | "contempt") => {
+    const handleModalOpen = async (departmentId: number, status: "total" | "pending" | "resolved" | "contempt") => {
     // If clicking on total cases, navigate to dashboard page
     if (status === "total") {
       navigate(`/department-dashboard/${departmentId}`)
@@ -294,16 +294,42 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     else if (status === "resolved") title = currentLang === "hi" ? "निराकृत मामले" : "Resolved Cases"
     else if (status === "contempt") title = currentLang === "hi" ? "अवमानना मामले" : "Contempt Cases"
     setModalTitle(title)
-
+    
     try {
       const filters = {
         department: departmentId,
+        includeAll: true,
         ...(status === "pending" ? { status: "Pending" as const } : {}),
         ...(status === "resolved" ? { status: "Resolved" as const } : {}),
         ...(status === "contempt" ? { writType: "Contempt" } : {})
       }
       const data = await fetchCases(filters)
-      setModalCases(data.cases || [])
+      const processedCases = (data.cases || []).map(c => ({
+        ...c,
+        petitionerName: c.petitionerName || c.petitionername || '-',
+        respondentName: c.respondentName || c.respondentname || '-'
+      }));
+      setModalCases(processedCases)
+    } catch (err) {
+      console.error('Error loading cases:', err);
+      setModalError(currentLang === "hi" ? "मामले लोड नहीं हो सके।" : "Failed to load cases.")
+    } finally {
+      setModalLoading(false)
+    }    try {
+      const filters = {
+        department: departmentId,
+        includeAll: true,
+        ...(status === "pending" ? { status: "Pending" as const } : {}),
+        ...(status === "resolved" ? { status: "Resolved" as const } : {}),
+        ...(status === "contempt" ? { writType: "Contempt" } : {})
+      }
+      const data = await fetchCases(filters)
+      const processedCases = (data.cases || []).map(c => ({
+        ...c,
+        petitionerName: c.petitionerName || c.petitionername || '-',
+        respondentName: c.respondentName || c.respondentname || '-'
+      }));
+      setModalCases(processedCases)
     } catch (err) {
       console.error('Error loading cases:', err);
       setModalError(currentLang === "hi" ? "मामले लोड नहीं हो सके।" : "Failed to load cases.")
@@ -318,9 +344,15 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     setAllCasesLoading(true)
     setAllCasesError(null)
     try {
-      const data = await fetchCases()
-      setAllCases(data.cases || [])
+      const data = await fetchCases({ includeAll: true });
+      const processedCases = (data.cases || []).map(c => ({
+        ...c,
+        petitionerName: c.petitionerName || c.petitionername || '-',
+        respondentName: c.respondentName || c.respondentname || '-'
+      }));
+      setAllCases(processedCases)
     } catch (err) {
+      console.error('Error loading cases:', err);
       setAllCasesError(currentLang === "hi" ? "मामले लोड नहीं हो सके।" : "Failed to load cases.")
     } finally {
       setAllCasesLoading(false)
@@ -385,11 +417,12 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                   <thead>
                     <tr>
                       <th className="p-2 border-b">{currentLang === "hi" ? "मामला आईडी" : "Case ID"}</th>
+                      <th className="p-2 border-b">{currentLang === "hi" ? "याचिकाकर्ता का नाम" : "Petitioner Name"}</th>
+                      <th className="p-2 border-b">{currentLang === "hi" ? "प्रतिवादी का नाम" : "Respondent Name"}</th>
+                      <th className="p-2 border-b">{currentLang === "hi" ? "दाखिल करने की तिथि" : "Filing Date"}</th>
                       <th className="p-2 border-b">{currentLang === "hi" ? "स्थिति" : "Status"}</th>
                       <th className="p-2 border-b">{currentLang === "hi" ? "रिट प्रकार" : "Writ Type"}</th>
                       <th className="p-2 border-b">{currentLang === "hi" ? "विभाग" : "Department"}</th>
-                      <th className="p-2 border-b">{currentLang === "hi" ? "याचिकाकर्ता का नाम" : "Petitioner Name"}</th>
-                      <th className="p-2 border-b">{currentLang === "hi" ? "प्रतिवादी का नाम" : "Respondent Name"}</th>
                       <th className="p-2 border-b">{currentLang === "hi" ? "उप-विभाग" : "Sub-Department"}</th>
                       <th className="p-2 border-b">{currentLang === "hi" ? "सुनवाई तिथि" : "Hearing Date"}</th>
                     </tr>
@@ -402,6 +435,15 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                       return (
                         <tr key={c.id}>
                           <td className="p-2 border-b font-medium">{c.caseNumber || c.id}</td>
+                          <td className="p-2 border-b font-medium">
+                            {c.petitionerName || "-"}
+                          </td>
+                          <td className="p-2 border-b font-medium">
+                            {c.respondentName || "-"}
+                          </td>
+                          <td className="p-2 border-b">
+                            {c.filingDate ? new Date(c.filingDate).toLocaleDateString() : "-"}
+                          </td>
                           <td className="p-2 border-b">
                             {displayStatus}
                           </td>
@@ -410,12 +452,6 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                             {currentLang === "hi"
                               ? departments.find((d) => d.id === c.department)?.name_hi || "-"
                               : departments.find((d) => d.id === c.department)?.name_en || "-"}
-                          </td>
-                          <td className="p-2 border-b font-medium">
-                            {c.petitionerName || "-"}
-                          </td>
-                          <td className="p-2 border-b font-medium">
-                            {c.respondentName || "-"}
                           </td>
                           <td className="p-2 border-b">
                             {c.subDepartments && c.subDepartments.length > 0 ? 
@@ -481,6 +517,9 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                 <thead>
                   <tr>
                     <th className="p-2 border-b">{currentLang === "hi" ? "मामला आईडी" : "Case ID"}</th>
+                    <th className="p-2 border-b">{currentLang === "hi" ? "याचिकाकर्ता का नाम" : "Petitioner Name"}</th>
+                    <th className="p-2 border-b">{currentLang === "hi" ? "प्रतिवादी का नाम" : "Respondent Name"}</th>
+                    <th className="p-2 border-b">{currentLang === "hi" ? "दाखिल करने की तिथि" : "Filing Date"}</th>
                     <th className="p-2 border-b">{currentLang === "hi" ? "स्थिति" : "Status"}</th>
                     <th className="p-2 border-b">{currentLang === "hi" ? "रिट प्रकार" : "Writ Type"}</th>
                     <th className="p-2 border-b">{currentLang === "hi" ? "सुनवाई तिथि" : "Hearing Date"}</th>
@@ -490,6 +529,15 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                   {modalCases.map((c) => (
                     <tr key={c.id}>
                       <td className="p-2 border-b font-medium">{c.caseNumber || c.id}</td>
+                      <td className="p-2 border-b font-medium">
+                        {c.petitionerName || "-"}
+                      </td>
+                      <td className="p-2 border-b font-medium">
+                        {c.respondentName || "-"}
+                      </td>
+                      <td className="p-2 border-b">
+                        {c.filingDate ? new Date(c.filingDate).toLocaleDateString() : "-"}
+                      </td>
                       <td className="p-2 border-b">
                         {currentLang === "hi" ? (c.status === "Pending" ? "लंबित" : "निराकृत") : c.status}
                       </td>

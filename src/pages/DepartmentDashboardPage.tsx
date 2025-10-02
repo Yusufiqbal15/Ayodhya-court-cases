@@ -8,9 +8,11 @@ import { fetchCases } from '@/lib/api';
 import { format } from 'date-fns';
 
 interface Case {
+  _id?: string;
   id: string;
   caseNumber?: string;
   date: string;
+  filingDate: Date;
   status: 'Pending' | 'Resolved';
   hearingDate?: string;
   writType?: string;
@@ -87,7 +89,7 @@ const DepartmentDashboardPage: React.FC = () => {
       recentCases: "Recent Cases",
       caseId: "Case ID",
       status: "Status",
-      date: "Date",
+      date: "Filing Date",
       hearingDate: "Hearing Date",
       backToReports: "Back to Reports",
       loading: "Loading...",
@@ -104,7 +106,7 @@ const DepartmentDashboardPage: React.FC = () => {
       recentCases: "हाल के मामले",
       caseId: "मामला आईडी",
       status: "स्थिति",
-      date: "तिथि",
+      date: "दाखिल करने की तिथि",
       hearingDate: "सुनवाई तिथि",
       backToReports: "रिपोर्ट पर वापस जाएं",
       loading: "लोड हो रहा है...",
@@ -236,8 +238,8 @@ const DepartmentDashboardPage: React.FC = () => {
                         {caseItem.caseNumber || caseItem.id}
                       </td>
                       <td className="py-3 px-4 text-gray-600">
-                        {caseItem.date && !isNaN(new Date(caseItem.date).getTime())
-                          ? format(new Date(caseItem.date), 'dd/MM/yyyy')
+                        {caseItem.filingDate && !isNaN(new Date(caseItem.filingDate).getTime())
+                          ? format(new Date(caseItem.filingDate), 'dd/MM/yyyy')
                           : '-'}
                       </td>
                       <td className="py-3 px-4">

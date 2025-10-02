@@ -137,6 +137,12 @@ const AllCasesPage: React.FC = () => {
                   {currentLang === 'hi' ? 'मामला आईडी' : 'Case ID'}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {currentLang === 'hi' ? 'याचिकाकर्ता का नाम' : 'Petitioner Name'}
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {currentLang === 'hi' ? 'प्रतिवादी का नाम' : 'Respondent Name'}
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {currentLang === 'hi' ? 'दिनांक' : 'Date'}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -159,6 +165,12 @@ const AllCasesPage: React.FC = () => {
                   <tr key={caseItem._id || caseItem.id}>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{caseItem.caseNumber || caseItem.id}</div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || '-'}</div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{caseItem.filingDate ? format(new Date(caseItem.filingDate), 'yyyy-MM-dd') : '-'}</div>
