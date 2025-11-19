@@ -114,13 +114,13 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
       // Fetch all cases for the department with complete data
       const data = await fetchCases({
         department: departmentId,
-        limit: 1000, // Large limit to get all cases
+        limit: 10000, // Large limit to get all cases
       })
       const departmentCases = (data.cases || []).map(c => ({
         ...c,
         hearingDate: c.hearingDate || null,
-        petitionerName: c.petitionerName || c.petitionername || '-',
-        respondentName: c.respondentName || c.respondentname || '-',
+        petitionerName: c.petitionerName || '-',
+        respondentName: c.respondentName || '-',
         writType: c.writType || '-',
         caseType: c.caseType || '-'
       }))
@@ -248,8 +248,8 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                 <td class="border p-2 text-center">${currentLang === "hi" ? (c.status === "Pending" ? "लंबित" : "निराकृत") : c.status}</td>
                 <td class="border p-2">${c.hearingDate ? new Date(c.hearingDate).toLocaleDateString('hi-IN') : "-"}</td>
                 <td class="border p-2">${c.subDepartment?.name_hi || "-"}</td>
-                <td class="border p-2 font-medium">${c.petitionerName || c.petitionername || "-"}</td>
-                <td class="border p-2 font-medium">${c.respondentName || c.respondentname || "-"}</td>
+                <td class="border p-2 font-medium">${c.petitionerName || "-"}</td>
+                <td class="border p-2 font-medium">${c.respondentName || "-"}</td>
                 <td class="border p-2">${c.writType || "-"}</td>
                 <td class="border p-2">${departmentName}</td>
               </tr>
@@ -347,8 +347,8 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
       const data = await fetchCases({ includeAll: true });
       const processedCases = (data.cases || []).map(c => ({
         ...c,
-        petitionerName: c.petitionerName || c.petitionername || '-',
-        respondentName: c.respondentName || c.respondentname || '-'
+        petitionerName: c.petitionerName || '-',
+        respondentName: c.respondentName || '-'
       }));
       setAllCases(processedCases)
     } catch (err) {

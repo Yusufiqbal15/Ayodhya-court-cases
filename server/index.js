@@ -22,6 +22,10 @@ app.use(cors());
 
 app.use(express.json());
 
+// Routes
+const fetchCasesRouter = require('./routes/fetchCases');
+app.use('/', fetchCasesRouter);
+
 // Test email configuration endpoint
 app.get('/email-config/test', async (req, res) => {
   try {
@@ -86,7 +90,14 @@ mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log('✅ MongoDB connected successfully'))
+  .then(async () => {
+    console.log('✅ MongoDB connected successfully');
+    // Generate test data if in development environment
+    if (process.env.NODE_ENV === 'development') {
+      const { generateTestCases } = require('./testData');
+      await generateTestCases();
+    }
+  })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
     console.log('💡 Make sure MongoDB is running or check your connection string');
@@ -166,7 +177,7 @@ const adminSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const Case = mongoose.model('Case', caseSchema);
+const Case = require('./models/CaseModel');
 const Department = mongoose.model('Department', departmentSchema);
 const SubDepartment = mongoose.model('SubDepartment', subDepartmentSchema);
 const EmailReminder = mongoose.model('EmailReminder', emailReminderSchema);
@@ -849,7 +860,7 @@ app.post('/email-reminders', async (req, res) => {
         <p>This is a reminder regarding the following case:</p>
         <ul>
           <li><strong>Case Number:</strong> ${caseData.caseNumber || 'N/A'}</li>
-          <li><strong>Petitioner:</strong> ${caseData.petitionername}</li>
+          <li><strong>Petitioner:</strong> ${caseData.petitionerName}</li>
           <li><strong>Respondent:</strong> ${caseData.respondentname}</li>
           <li><strong>Filing Date:</strong> ${caseData.filingDate ? new Date(caseData.filingDate).toLocaleDateString() : 'N/A'}</li>
           <li><strong>Status:</strong> ${caseData.status}</li>

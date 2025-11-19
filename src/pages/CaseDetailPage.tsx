@@ -727,6 +727,8 @@ const CaseDetailPage: React.FC = () => {
               </>
             )}
           </div>
+          
+          
 
           <div className="col-span-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">{t.isthecounteraffidavittobefiledornot}</label>
@@ -739,6 +741,16 @@ const CaseDetailPage: React.FC = () => {
               </Button>
             </div>
           </div>
+          <div className="col-span-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1 ">Check Live Status</label>
+            <div className="flex items-center space-x-2">
+              <a href={`https://hclko.allahabadhighcourt.in/status/index.php/case-number`} target='_blank'><Button className='bg-red-600 text-white hover:bg-green-700'>Check here</Button></a>
+            </div>
+          </div>
+
+          
+
+          
         </div>
       </Card>
 

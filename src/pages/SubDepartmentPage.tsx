@@ -4,8 +4,23 @@ import { useApp } from '@/contexts/AppContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { generateMockCases, translations } from '@/utils/departmentUtils';
-import { fetchSubDepartments, fetchDepartments } from '@/lib/api';
+import { translations } from '@/utils/departmentUtils';
+import { fetchSubDepartments, fetchDepartments, fetchCases } from '@/lib/api';
+
+interface CaseType {
+  _id?: string;
+  id: string;
+  caseNumber: string;
+  petitionerName: string;
+  respondentName: string;
+  date?: string;
+  status: 'Pending' | 'Resolved';
+  hearingDate?: string;
+  filingDate?: string;
+  writType?: string;
+  department?: number;
+  subDepartment?: any;
+}
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -22,6 +37,7 @@ const SubDepartmentPage: React.FC = () => {
   const [reminderEmail, setReminderEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [casesData, setCasesData] = useState<CaseType[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -30,13 +46,15 @@ const SubDepartmentPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [subDeptsData, deptsData] = await Promise.all([
+      const [subDeptsData, deptsData, cases] = await Promise.all([
         fetchSubDepartments(),
-        fetchDepartments()
+        fetchDepartments(),
+        fetchCases({ subDepartment: subDepartmentId ? parseInt(subDepartmentId) : undefined })
       ]);
       
       setSubDepartments(subDeptsData);
       setDepartments(deptsData);
+      setCasesData(cases.cases || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       setSubDepartments([]);
@@ -53,7 +71,6 @@ const SubDepartmentPage: React.FC = () => {
     subDept.id === Number(subDepartmentId) || subDept._id === subDepartmentId
   );
   
-  const cases = generateMockCases(Number(subDepartmentId));
   const t = translations[currentLang];
 
   const validateEmail = (email: string) => {
@@ -141,7 +158,7 @@ const SubDepartmentPage: React.FC = () => {
         <Card className="bg-jansunwayi-blue text-white">
           <div className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">{t.totalCases}</h3>
-            <p className="text-3xl font-bold">{cases.length}</p>
+            <p className="text-3xl font-bold">{casesData.length}</p>
           </div>
         </Card>
         
@@ -149,7 +166,7 @@ const SubDepartmentPage: React.FC = () => {
           <div className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">{t.resolvedCases}</h3>
             <p className="text-3xl font-bold">
-              {cases.filter(c => c.status === 'Resolved').length}
+              {casesData.filter(c => c.status === 'Resolved').length}
             </p>
           </div>
         </Card>
@@ -158,7 +175,7 @@ const SubDepartmentPage: React.FC = () => {
           <div className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">{t.pendingCases}</h3>
             <p className="text-3xl font-bold">
-              {cases.filter(c => c.status === 'Pending').length}
+              {casesData.filter(c => c.status === 'Pending').length}
             </p>
           </div>
         </Card>
@@ -189,6 +206,12 @@ const SubDepartmentPage: React.FC = () => {
                   {t.caseId}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {currentLang === 'hi' ? 'याचिकाकर्ता का नाम' : 'Petitioner Name'}
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {currentLang === 'hi' ? 'प्रतिवादी का नाम' : 'Respondent Name'}
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t.date}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -203,17 +226,23 @@ const SubDepartmentPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {cases.slice(0, 5).map((caseItem) => {
+              {casesData.slice(0, 5).map((caseItem) => {
                 const needsReminder = caseItem.status === 'Pending';
                 
                 return (
                   <tr key={caseItem.id} className={needsReminder ? 'bg-red-50' : ''}>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{caseItem.id}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.caseNumber || caseItem.id}</div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || '-'}</div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {format(caseItem.date, 'yyyy-MM-dd')}
+                        {caseItem.filingDate ? format(new Date(caseItem.filingDate), 'yyyy-MM-dd') : '-'}
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
@@ -226,7 +255,7 @@ const SubDepartmentPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                      {caseItem.hearingDate ? format(caseItem.hearingDate, 'yyyy-MM-dd') : '-'}
+                      {caseItem.hearingDate ? format(new Date(caseItem.hearingDate), 'yyyy-MM-dd') : '-'}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
@@ -254,7 +283,7 @@ const SubDepartmentPage: React.FC = () => {
           </table>
         </div>
         
-        {cases.length > 5 && (
+        {casesData.length > 5 && (
           <div className="mt-4 text-center">
             <Button onClick={handleViewAllCases} variant="outline">
               {currentLang === 'hi' ? 'सभी मामले देखें' : 'View All Cases'}

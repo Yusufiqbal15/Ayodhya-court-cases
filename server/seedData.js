@@ -180,29 +180,14 @@ async function seedDatabase() {
     await SubDepartment.insertMany(subDepartmentsToInsert);
     console.log(`Inserted ${subDepartmentsToInsert.length} sub-departments`);
 
-    // Case Schema
-    const caseSchema = new mongoose.Schema({
-      caseNumber: String,
-      petitionername: String,
-      respondentname: String,
-      status: String,
-      filingDate: Date,
-      hearingDate: Date,
-      department: Number,
-      subDepartment: Number,
-      petitionNumber: String,
-      noticeNumber: String,
-      writType: String,
-      createdAt: { type: Date, default: Date.now }
-    });
-    const Case = mongoose.model('Case', caseSchema);
+    const Case = require('./models/CaseModel');
 
     // Insert test cases
     const testCases = [
       {
         caseNumber: "2024-001",
-        petitionername: "Test Case One",
-        respondentname: "Respondent One",
+        petitionerName: "Test Case One",
+        respondentName: "Respondent One",
         status: "Open",
         filingDate: new Date("2024-06-01"),
         hearingDate: new Date("2024-06-10"),
@@ -214,8 +199,8 @@ async function seedDatabase() {
       },
       {
         caseNumber: "2024-002",
-        petitionername: "Test Case Two",
-        respondentname: "Respondent Two",
+        petitionerName: "Test Case Two",
+        respondentName: "Respondent Two",
         status: "Closed",
         filingDate: new Date("2024-05-15"),
         hearingDate: new Date("2024-06-15"),
