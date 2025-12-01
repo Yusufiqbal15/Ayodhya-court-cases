@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { translations } from '@/utils/departmentUtils';
 import { fetchSubDepartments, fetchDepartments, fetchCases } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 
 interface CaseType {
   _id?: string;
@@ -18,6 +19,7 @@ interface CaseType {
   hearingDate?: string;
   filingDate?: string;
   writType?: string;
+  noticeNumber?: string;
   department?: number;
   subDepartment?: any;
 }
@@ -30,48 +32,55 @@ const SubDepartmentPage: React.FC = () => {
   const { currentLang } = useApp();
   const { subDepartmentId } = useParams<{ subDepartmentId: string }>();
   const navigate = useNavigate();
-  const [subDepartments, setSubDepartments] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [reminderEmail, setReminderEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [casesData, setCasesData] = useState<CaseType[]>([]);
+
+  // We'll resolve the sub-department _id (if route param is numeric id) and then fetch cases
+  // Fetch sub-departments first (below) and then use that data to determine the ObjectId to query by.
+
+  // Fetch sub-departments and departments
+  const { data: subDepartsData = [], isLoading: subDeptsLoading } = useQuery({
+    queryKey: ['subDepartments'],
+    queryFn: fetchSubDepartments,
+  });
+
+  const { data: deptsData = [], isLoading: deptsLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: fetchDepartments,
+  });
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [subDeptsData, deptsData, cases] = await Promise.all([
-        fetchSubDepartments(),
-        fetchDepartments(),
-        fetchCases({ subDepartment: subDepartmentId ? parseInt(subDepartmentId) : undefined })
-      ]);
-      
-      setSubDepartments(subDeptsData);
+    if (subDepartsData && deptsData) {
       setDepartments(deptsData);
-      setCasesData(cases.cases || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setSubDepartments([]);
-      setDepartments([
-        { id: 1, name_en: "Administration Department", name_hi: "प्रशासन विभाग" },
-        { id: 2, name_en: "Development department", name_hi: "विकास विभाग" },
-      ]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [subDepartsData, deptsData]);
 
-  const subDepartment = subDepartments.find(subDept => 
+  const subDepartment = subDepartsData.find((subDept: any) =>
     subDept.id === Number(subDepartmentId) || subDept._id === subDepartmentId
-  );
-  
-  const t = translations[currentLang];
+  ); const t = translations[currentLang];
+
+  // Resolve a proper subDepartment identifier to pass to the API (prefer Mongo _id)
+  const resolvedSubDepartmentId = React.useMemo(() => {
+    if (!subDepartsData || !subDepartmentId) return subDepartmentId;
+    const found = (subDepartsData as any[]).find((s: any) => s._id === subDepartmentId || s.id === Number(subDepartmentId));
+    if (found) return found._id || String(found.id);
+    return subDepartmentId;
+  }, [subDepartsData, subDepartmentId]);
+
+  // Now fetch cases using the resolved sub-department id (server expects ObjectId when filtering by subDepartment)
+  const { data: casesResponse, isLoading: casesLoading } = useQuery({
+    queryKey: ['cases', resolvedSubDepartmentId],
+    queryFn: async () => fetchCases({ subDepartment: resolvedSubDepartmentId as any }),
+    enabled: !!resolvedSubDepartmentId,
+    staleTime: 0,
+  });
+
+  const casesData = (casesResponse?.cases || casesResponse || []) as CaseType[];
+
+  const loading = subDeptsLoading || deptsLoading || casesLoading;
 
   const validateEmail = (email: string) => {
     return /\S+@\S+\.\S+/.test(email);
@@ -128,7 +137,7 @@ const SubDepartmentPage: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
@@ -153,7 +162,7 @@ const SubDepartmentPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="bg-jansunwayi-blue text-white">
           <div className="p-6 text-center">
@@ -161,7 +170,7 @@ const SubDepartmentPage: React.FC = () => {
             <p className="text-3xl font-bold">{casesData.length}</p>
           </div>
         </Card>
-        
+
         <Card className="bg-jansunwayi-green text-white">
           <div className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">{t.resolvedCases}</h3>
@@ -170,7 +179,7 @@ const SubDepartmentPage: React.FC = () => {
             </p>
           </div>
         </Card>
-        
+
         <Card className="bg-jansunwayi-saffron text-white">
           <div className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">{t.pendingCases}</h3>
@@ -180,7 +189,7 @@ const SubDepartmentPage: React.FC = () => {
           </div>
         </Card>
       </div>
-      
+
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-jansunwayi-navy">
@@ -197,7 +206,7 @@ const SubDepartmentPage: React.FC = () => {
             </Button>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-gray-50">
@@ -218,7 +227,7 @@ const SubDepartmentPage: React.FC = () => {
                   {t.status}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t.hearingDate}
+                  {t.noticeNumber}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t.actions}
@@ -228,17 +237,17 @@ const SubDepartmentPage: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {casesData.slice(0, 5).map((caseItem) => {
                 const needsReminder = caseItem.status === 'Pending';
-                
+
                 return (
                   <tr key={caseItem.id} className={needsReminder ? 'bg-red-50' : ''}>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{caseItem.caseNumber || caseItem.id}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || '-'}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || (caseItem as any).petitionername || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || '-'}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || (caseItem as any).respondentname || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
@@ -246,16 +255,15 @@ const SubDepartmentPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        caseItem.status === 'Pending' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${caseItem.status === 'Pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                        }`}>
                         {currentLang === 'en' ? caseItem.status : (caseItem.status === 'Pending' ? t.pending : t.resolved)}
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                      {caseItem.hearingDate ? format(new Date(caseItem.hearingDate), 'yyyy-MM-dd') : '-'}
+                      {caseItem.noticeNumber || '-'}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
@@ -282,7 +290,7 @@ const SubDepartmentPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-        
+
         {casesData.length > 5 && (
           <div className="mt-4 text-center">
             <Button onClick={handleViewAllCases} variant="outline">
@@ -299,8 +307,8 @@ const SubDepartmentPage: React.FC = () => {
               {currentLang === 'hi' ? 'ईमेल अनुस्मारक भेजें' : 'Send Email Reminder'}
             </DialogTitle>
             <DialogDescription>
-              {currentLang === 'hi' 
-                ? `मामला ${selectedCaseId} के लिए अनुस्मारक ईमेल भेजें` 
+              {currentLang === 'hi'
+                ? `मामला ${selectedCaseId} के लिए अनुस्मारक ईमेल भेजें`
                 : `Send reminder email for case ${selectedCaseId}`
               }
             </DialogDescription>
@@ -331,8 +339,8 @@ const SubDepartmentPage: React.FC = () => {
               onClick={handleSendEmail}
               disabled={sending || !reminderEmail}
             >
-              {sending 
-                ? (currentLang === 'hi' ? 'भेज रहा है...' : 'Sending...') 
+              {sending
+                ? (currentLang === 'hi' ? 'भेज रहा है...' : 'Sending...')
                 : (currentLang === 'hi' ? 'भेजें' : 'Send')
               }
             </Button>

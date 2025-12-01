@@ -261,7 +261,8 @@ const AddCasePage: React.FC = () => {
         writType: finalWritType,
         caseType: finalWritType, // Using writType as caseType
         department: parseInt(formData.department),
-        subDepartments: formData.subDepartments.filter(id => id).map(id => parseInt(id)),
+        // Keep sub-department values as provided (ObjectId strings when available)
+        subDepartments: formData.subDepartments.filter(id => id),
         affidavitDueDate: formData.affidavitDueDate,
         affidavitSubmissionDate: formData.affidavitSubmissionDate,
         counterAffidavitRequired: formData.counterAffidavitRequired,
@@ -372,7 +373,7 @@ const AddCasePage: React.FC = () => {
                 placeholder="Person against whom the case is filed"
                 className="input-field"
               />
-            </div>            
+            </div>
             {/* Filing Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

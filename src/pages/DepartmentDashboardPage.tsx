@@ -15,6 +15,7 @@ interface Case {
   filingDate: Date;
   status: 'Pending' | 'Resolved';
   hearingDate?: string;
+  noticeNumber?: string;
   writType?: string;
   department: number;
   subDepartment?: any;
@@ -90,7 +91,7 @@ const DepartmentDashboardPage: React.FC = () => {
       caseId: "Case ID",
       status: "Status",
       date: "Filing Date",
-      hearingDate: "Hearing Date",
+      noticeNumber: "Notice Number",
       backToReports: "Back to Reports",
       loading: "Loading...",
       noCases: "No cases found",
@@ -107,7 +108,7 @@ const DepartmentDashboardPage: React.FC = () => {
       caseId: "मामला आईडी",
       status: "स्थिति",
       date: "दाखिल करने की तिथि",
-      hearingDate: "सुनवाई तिथि",
+      noticeNumber: "सूचना संख्या",
       backToReports: "रिपोर्ट पर वापस जाएं",
       loading: "लोड हो रहा है...",
       noCases: "कोई मामला नहीं मिला",
@@ -126,7 +127,7 @@ const DepartmentDashboardPage: React.FC = () => {
         const deptId = parseInt(departmentId || '0');
         const deptCases = data.cases?.filter((c: Case) => c.department === deptId) || [];
         setCases(deptCases);
-        
+
         const dept = departments.find(d => d.id === deptId);
         setDepartmentName(currentLang === 'hi' ? dept?.name_hi || '' : dept?.name_en || '');
       } catch (error) {
@@ -161,7 +162,7 @@ const DepartmentDashboardPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-jansunwayi-navy">{t.title}</h1>
           <p className="text-jansunwayi-darkgray mt-2">{departmentName}</p>
         </div>
-        <Button 
+        <Button
           onClick={() => navigate('/reports')}
           variant="outline"
           className="flex items-center gap-2"
@@ -184,7 +185,7 @@ const DepartmentDashboardPage: React.FC = () => {
             </div>
           </div>
         </Card>
-        
+
         <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
           <div className="p-6">
             <div className="flex items-center justify-between">
@@ -196,7 +197,7 @@ const DepartmentDashboardPage: React.FC = () => {
             </div>
           </div>
         </Card>
-        
+
         <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
           <div className="p-6">
             <div className="flex items-center justify-between">
@@ -217,7 +218,7 @@ const DepartmentDashboardPage: React.FC = () => {
             <AlertCircle className="w-5 h-5" />
             {t.recentCases}
           </h2>
-          
+
           {recentCases.length === 0 ? (
             <div className="text-center py-8 text-gray-500">{t.noCases}</div>
           ) : (
@@ -228,7 +229,7 @@ const DepartmentDashboardPage: React.FC = () => {
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">{t.caseId}</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">{t.date}</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">{t.status}</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">{t.hearingDate}</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">{t.noticeNumber}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,18 +244,15 @@ const DepartmentDashboardPage: React.FC = () => {
                           : '-'}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          caseItem.status === 'Pending' 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${caseItem.status === 'Pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-green-100 text-green-800'
+                          }`}>
                           {caseItem.status === 'Pending' ? t.pending : t.resolved}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-gray-600">
-                        {caseItem.hearingDate && !isNaN(new Date(caseItem.hearingDate).getTime())
-                          ? format(new Date(caseItem.hearingDate), 'dd/MM/yyyy')
-                          : '-'}
+                        {caseItem.noticeNumber || '-'}
                       </td>
                       <td className="py-3 px-4">
                         <Button size="sm" variant="outline" onClick={() => navigate(`/case/${caseItem._id || caseItem.id}`)}>
@@ -285,7 +283,7 @@ const DepartmentDashboardPage: React.FC = () => {
                   <span>{Math.round((resolvedCases / totalCases) * 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
+                  <div
                     className="bg-green-500 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${(resolvedCases / totalCases) * 100}%` }}
                   ></div>
@@ -297,7 +295,7 @@ const DepartmentDashboardPage: React.FC = () => {
                   <span>{Math.round((pendingCases / totalCases) * 100)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
+                  <div
                     className="bg-yellow-500 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${(pendingCases / totalCases) * 100}%` }}
                   ></div>

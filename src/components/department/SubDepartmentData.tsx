@@ -17,10 +17,11 @@ const SubDepartmentData: React.FC<Props> = ({ departmentId, currentLang, onBack 
     queryFn: () => fetchSubDepartments(departmentId),
   });
 
-  // Fetch all cases
-  const { data: casesData, isLoading: loadingCases } = useQuery({
-    queryKey: ['cases'],
-    queryFn: fetchCases,
+  // Fetch cases for this department (server returns populated subDepartment/subDepartments)
+  const { data: casesData, isLoading: loadingCases, error: casesError } = useQuery({
+    queryKey: ['cases', departmentId],
+    queryFn: () => fetchCases({ department: departmentId }),
+    enabled: !!departmentId,
   });
 
   if (loadingSubDepts || loadingCases) {
@@ -33,18 +34,45 @@ const SubDepartmentData: React.FC<Props> = ({ departmentId, currentLang, onBack 
     );
   }
 
-  // Calculate stats for each sub-department
+  if (casesError) {
+    return (
+      <div className="text-red-600 p-6">{currentLang === 'hi' ? 'मामलों को लाने में त्रुटि' : 'Error loading cases from server'}</div>
+    );
+  }
+
+  // Normalize cases array
+  const allCases = (casesData && (casesData.cases || casesData)) || [];
+
+  // Calculate stats for each sub-department — consider both `subDepartment` (single) and `subDepartments` (multiple)
   const subDepartmentStats = subDepartments?.map(subDept => {
-    const subDeptCases = casesData?.cases?.filter(c => 
-      c.subDepartment && c.subDepartment._id === subDept._id
-    ) || [];
+    const targetId = subDept._id?.toString();
+
+    const subDeptCases = (allCases || []).filter((c: any) => {
+      // single subDepartment (may be populated object or string)
+      if (c.subDepartment) {
+        const singleId = typeof c.subDepartment === 'string'
+          ? c.subDepartment
+          : (c.subDepartment._id ? c.subDepartment._id.toString() : (c.subDepartment.toString ? c.subDepartment.toString() : ''));
+        if (singleId === targetId) return true;
+      }
+
+      // multiple subDepartments (array of objects or strings)
+      if (Array.isArray(c.subDepartments) && c.subDepartments.length > 0) {
+        const multiIds = c.subDepartments.map((s: any) =>
+          typeof s === 'string' ? s : (s._id ? s._id.toString() : (s.toString ? s.toString() : ''))
+        );
+        if (multiIds.includes(targetId)) return true;
+      }
+
+      return false;
+    });
 
     return {
       id: subDept._id,
       name: currentLang === 'hi' ? subDept.name_hi : subDept.name_en,
       total: subDeptCases.length,
-      pending: subDeptCases.filter(c => c.status === 'Pending').length,
-      resolved: subDeptCases.filter(c => c.status === 'Resolved').length,
+      pending: subDeptCases.filter((c: any) => c.status === 'Pending').length,
+      resolved: subDeptCases.filter((c: any) => c.status === 'Resolved').length,
     };
   }) || [];
 

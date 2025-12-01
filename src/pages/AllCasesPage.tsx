@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, RefreshCw, Filter } from 'lucide-react';
 import { fetchCases, fetchSubDepartments, fetchDepartments } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -13,25 +14,16 @@ const AllCasesPage: React.FC = () => {
   const { currentLang } = useApp();
   const { subDepartmentId } = useParams<{ subDepartmentId: string }>();
   const navigate = useNavigate();
-  const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [searchId, setSearchId] = useState<string>('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Use react-query to fetch cases and listen to invalidation from AddCasePage
+  const { data: casesResponse, isLoading: casesLoading } = useQuery({
+    queryKey: ['cases', subDepartmentId],
+    queryFn: async () => fetchCases({ subDepartment: subDepartmentId }),
+    staleTime: 0, // Always refetch when invalidated
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const casesData = await fetchCases({ subDepartment: subDepartmentId });
-      setCases(casesData.cases || casesData || []);
-    } catch (error) {
-      setCases([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const cases = (casesResponse?.cases || casesResponse || []);
 
   const translations = {
     en: {
@@ -58,10 +50,10 @@ const AllCasesPage: React.FC = () => {
   const filteredCases = searchId.trim() === ''
     ? cases
     : cases.filter((caseItem) =>
-        (caseItem.caseNumber || caseItem.id || '').toString().toLowerCase().includes(searchId.trim().toLowerCase())
-      );
+      (caseItem.caseNumber || caseItem.id || '').toString().toLowerCase().includes(searchId.trim().toLowerCase())
+    );
 
-  if (loading) {
+  if (casesLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex justify-center items-center h-64">
@@ -167,20 +159,19 @@ const AllCasesPage: React.FC = () => {
                       <div className="text-sm font-medium text-gray-900">{caseItem.caseNumber || caseItem.id}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || '-'}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.petitionerName || (caseItem as any).petitionername || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || '-'}</div>
+                      <div className="text-sm font-medium text-gray-900">{caseItem.respondentName || (caseItem as any).respondentname || '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{caseItem.filingDate ? format(new Date(caseItem.filingDate), 'yyyy-MM-dd') : '-'}</div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        caseItem.status === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${caseItem.status === 'Pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                        }`}>
                         {currentLang === 'en' ? caseItem.status : (caseItem.status === 'Pending' ? 'लंबित' : 'निराकृत')}
                       </span>
                     </td>

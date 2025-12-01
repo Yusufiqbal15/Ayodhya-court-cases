@@ -54,7 +54,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // In development, Vite proxy handles "/api" -> localhost. In production, use full backend URL.
 const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || 'https://ayodhya-court-br1u.vercel.app';
 const API_BASE_LOCAL = 'http://localhost:5000';
-const API_TIMEOUT = 3000; // 3 seconds
+const API_TIMEOUT = 10000; // 10 seconds
 
 // Error logging utility
 const logError = (message: string, error: any) => {
@@ -139,6 +139,9 @@ export const createCase = async (caseData: Omit<Case, 'id' | 'hearingDate' | 're
 
     const fallbackCaseNumber = () => `CN-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
+    const department = (caseData as any).department;
+    const departmentNum = typeof department === 'string' ? parseInt(department, 10) : department;
+
     const payload: any = {
       caseNumber: (caseData as any).caseNumber || fallbackCaseNumber(),
       petitionerName: (caseData as any).petitionerName,
@@ -147,7 +150,7 @@ export const createCase = async (caseData: Omit<Case, 'id' | 'hearingDate' | 're
       petitionNumber: (caseData as any).petitionNumber,
       noticeNumber: (caseData as any).noticeNumber,
       writType: (caseData as any).writType,
-      department: (caseData as any).department,
+      department: departmentNum,
       status: (caseData as any).status,
       affidavitDueDate: toIso((caseData as any).affidavitDueDate),
       affidavitSubmissionDate: toIso((caseData as any).affidavitSubmissionDate),
