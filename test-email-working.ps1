@@ -1,7 +1,7 @@
 # Test Email Working Status
 Write-Host "🔍 Testing Email Functionality..." -ForegroundColor Yellow
 
-$baseUrl = "https://ayodhya-court-cases-nmfl.vercel.app/"
+$baseUrl = "https://ayodhya-court-cases-fg.vercel.app/"
 
 # Test 1: Check email status
 Write-Host "`n📧 Test 1: Checking Email Status..." -ForegroundColor Cyan

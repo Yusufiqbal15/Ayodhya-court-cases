@@ -1,7 +1,7 @@
 # Test Email NOW - Immediate Test
 Write-Host "🚀 Testing Email Functionality NOW..." -ForegroundColor Green
 
-$baseUrl = "https://ayodhya-court-cases-nmfl.vercel.app/"
+$baseUrl = "https://ayodhya-court-cases-fg.vercel.app/"
 
 # Test the working endpoint
 Write-Host "`n📧 Testing Working Email Endpoint..." -ForegroundColor Cyan
