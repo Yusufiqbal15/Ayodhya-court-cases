@@ -94,6 +94,8 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
   const [allCases, setAllCases] = useState<Case[]>([])
   const [allCasesLoading, setAllCasesLoading] = useState(false)
   const [allCasesError, setAllCasesError] = useState<string | null>(null)
+  const [fromDate, setFromDate] = useState<string>("")
+  const [toDate, setToDate] = useState<string>("")
   const navigate = useNavigate()
 
   // Use react-query to fetch cases
@@ -116,14 +118,33 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
         department: departmentId,
         limit: 10000, // Large limit to get all cases
       })
-      const departmentCases = (data.cases || []).map(c => ({
-        ...c,
-        hearingDate: c.hearingDate || null,
-        petitionerName: c.petitionerName || '-',
-        respondentName: c.respondentName || '-',
-        writType: c.writType || '-',
-        caseType: c.caseType || '-'
-      }))
+      // Normalize fields and apply date-range filter (if set)
+      const from = fromDate ? new Date(fromDate) : null
+      const to = toDate ? new Date(toDate) : null
+      const departmentCases = (data.cases || [])
+        .map((c) => ({
+          ...c,
+          hearingDate: c.hearingDate || c.filingDate || null,
+          petitionerName:
+            (c as any).petitionerName || (c as any).petitionername || (c as any).petitioner || (c as any).petitioner_name || '-',
+          respondentName:
+            (c as any).respondentName || (c as any).respondentname || (c as any).respondent || (c as any).respondent_name || '-',
+          writType: c.writType || c.writtype || '-',
+          caseType: c.caseType || c.caseType || '-'
+        }))
+        .filter((c) => {
+          if (!from && !to) return true
+          const caseDate = c.hearingDate ? new Date(c.hearingDate) : c.filingDate ? new Date(c.filingDate) : null
+          if (!caseDate) return false
+          if (from && caseDate < from) return false
+          if (to) {
+            // include the 'to' date entire day
+            const toEnd = new Date(to)
+            toEnd.setHours(23, 59, 59, 999)
+            if (caseDate > toEnd) return false
+          }
+          return true
+        })
       const department = departments.find((d) => d.id === departmentId)
 
       if (departmentCases.length === 0) {
@@ -276,13 +297,13 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     }
   }
 
-    const handleModalOpen = async (departmentId: number, status: "total" | "pending" | "resolved" | "contempt") => {
+  const handleModalOpen = async (departmentId: number, status: "total" | "pending" | "resolved" | "contempt") => {
     // If clicking on total cases, navigate to dashboard page
     if (status === "total") {
       navigate(`/department-dashboard/${departmentId}`)
       return
     }
-    
+
     setSelectedDeptId(departmentId)
     setModalOpen(true)
     setModalCases([])
@@ -294,7 +315,7 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     else if (status === "resolved") title = currentLang === "hi" ? "निराकृत मामले" : "Resolved Cases"
     else if (status === "contempt") title = currentLang === "hi" ? "अवमानना मामले" : "Contempt Cases"
     setModalTitle(title)
-    
+
     try {
       const filters = {
         department: departmentId,
@@ -315,7 +336,7 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
       setModalError(currentLang === "hi" ? "मामले लोड नहीं हो सके।" : "Failed to load cases.")
     } finally {
       setModalLoading(false)
-    }    try {
+    } try {
       const filters = {
         department: departmentId,
         includeAll: true,
@@ -345,11 +366,26 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
     setAllCasesError(null)
     try {
       const data = await fetchCases({ includeAll: true });
-      const processedCases = (data.cases || []).map(c => ({
-        ...c,
-        petitionerName: c.petitionerName || '-',
-        respondentName: c.respondentName || '-'
-      }));
+      const from = fromDate ? new Date(fromDate) : null
+      const to = toDate ? new Date(toDate) : null
+      const processedCases = (data.cases || [])
+        .map(c => ({
+          ...c,
+          petitionerName: (c as any).petitionerName || (c as any).petitionername || (c as any).petitioner || (c as any).petitioner_name || '-',
+          respondentName: (c as any).respondentName || (c as any).respondentname || (c as any).respondent || (c as any).respondent_name || '-',
+        }))
+        .filter((c) => {
+          if (!from && !to) return true
+          const caseDate = c.hearingDate ? new Date(c.hearingDate) : c.filingDate ? new Date(c.filingDate) : null
+          if (!caseDate) return false
+          if (from && caseDate < from) return false
+          if (to) {
+            const toEnd = new Date(to)
+            toEnd.setHours(23, 59, 59, 999)
+            if (caseDate > toEnd) return false
+          }
+          return true
+        })
       setAllCases(processedCases)
     } catch (err) {
       console.error('Error loading cases:', err);
@@ -429,7 +465,7 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                   </thead>
                   <tbody>
                     {allCases.map((c) => {
-                      const displayStatus = currentLang === "hi" 
+                      const displayStatus = currentLang === "hi"
                         ? (c.status === "Pending" ? "लंबित" : "निराकृत")
                         : c.status
                       return (
@@ -454,7 +490,7 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
                               : departments.find((d) => d.id === c.department)?.name_en || "-"}
                           </td>
                           <td className="p-2 border-b">
-                            {c.subDepartments && c.subDepartments.length > 0 ? 
+                            {c.subDepartments && c.subDepartments.length > 0 ?
                               (currentLang === "hi" ? "उप-विभाग मौजूद" : "Has Sub-departments") : "-"}
                           </td>
                           <td className="p-2 border-b">
@@ -476,14 +512,36 @@ const DashboardChart: React.FC<Props> = ({ currentLang }) => {
         </DialogContent>
       </Dialog>
 
-      {/* All Cases Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
-          onClick={handleAllCasesModalOpen}
-        >
-          {currentLang === "hi" ? "सभी मामले" : "All Cases"}
-        </button>
+      {/* Date range & All Cases Button */}
+      <div className="flex justify-end items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-700">{currentLang === 'hi' ? 'से' : 'From'}:</label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="border px-2 py-1 rounded"
+            aria-label="from-date"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-700">{currentLang === 'hi' ? 'तक' : 'To'}:</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="border px-2 py-1 rounded"
+            aria-label="to-date"
+          />
+        </div>
+        <div className="ml-2">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+            onClick={handleAllCasesModalOpen}
+          >
+            {currentLang === "hi" ? "सभी मामले" : "All Cases"}
+          </button>
+        </div>
       </div>
 
       {/* Modal for department cases */}
