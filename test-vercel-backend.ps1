@@ -1,7 +1,7 @@
 # Test Vercel Backend - Quick Test
 Write-Host "🚀 Testing Vercel Backend..." -ForegroundColor Green
 
-$baseUrl = https://ayodhya-court-br1u.vercel.app"
+$baseUrl = https://ayodhya-court-cases-nmfl.vercel.app/"
 
 Write-Host "`n📧 Testing Email Endpoint on Vercel..." -ForegroundColor Cyan
 try {
